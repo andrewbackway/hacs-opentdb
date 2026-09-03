@@ -7,7 +7,6 @@ class OpenTdbCard extends HTMLElement {
     }
     setConfig(config) { this._config = config; this.render(); }
     set hass(value) { this._hass = value; this.render(); }
-    static getConfigElement() { return document.createElement("opentdb-card-editor"); }
     static getStubConfig() { return { title: "Trivia Quiz" }; }
     getQuizState() {
         if (!this._hass)
@@ -32,6 +31,7 @@ class OpenTdbCard extends HTMLElement {
         const prefix = entity.replace(/_quiz$/, "");
         const questionEntity = this._hass.states[`${prefix}_question`];
         const scoreEntity = this._hass.states[`${prefix}_score`];
+        const elapsedEntity = this._hass.states[`${prefix}_elapsed_time`];
         const question = questionEntity?.attributes;
         const score = scoreEntity?.attributes || {};
         const choices = Array.isArray(question?.answers) ? question.answers : [];
@@ -39,7 +39,7 @@ class OpenTdbCard extends HTMLElement {
         const feedback = attrs.feedback;
         this.innerHTML = `<ha-card><div class="wrap">
       <header><span>${this._config.title || attrs.quiz_name || "Trivia Quiz"}</span><span class="progress">${Number(attrs.question_index || 0) + 1} / ${attrs.total_questions || 0}</span></header>
-      ${quizState === "idle" ? `<button class="primary" data-action="start">Start quiz</button>` : quizState === "complete" ? `<section class="complete"><strong>Quiz complete</strong><div class="result">${attrs.percentage || 0}%</div><div>${attrs.elapsed_seconds || 0}s</div><button class="primary" data-action="start">New quiz</button></section>` : `<section class="question"><h2>${question?.question || ""}</h2><div class="answers">${choices.map((choice, index) => `<button data-answer="${index}" ${feedback ? "disabled" : ""}>${choice}</button>`).join("")}</div>${feedback ? `<div class="feedback" role="status">${feedback.correct ? "✓ Correct" : "✕ Incorrect"}</div>` : ""}</section>`}
+      ${quizState === "idle" ? `<button class="primary" data-action="start">Start quiz</button>` : quizState === "complete" ? `<section class="complete"><strong>Quiz complete</strong><div class="result">${score.percentage || 0}%</div><div>${elapsedEntity?.state || 0}s</div><button class="primary" data-action="start">New quiz</button></section>` : `<section class="question"><h2>${question?.question || ""}</h2><div class="answers">${choices.map((choice, index) => `<button data-answer="${index}" ${feedback ? "disabled" : ""}>${choice}</button>`).join("")}</div>${feedback ? `<div class="feedback" role="status">${feedback.correct ? "✓ Correct" : "✕ Incorrect"}</div>` : ""}</section>`}
       <footer>Score: ${score.correct || 0} / ${score.answered || 0}</footer></div></ha-card>`;
         this.querySelectorAll("[data-action='start']").forEach(button => button.onclick = () => this.service("new_quiz"));
         this.querySelectorAll("[data-answer]").forEach(button => button.onclick = () => {

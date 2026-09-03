@@ -1,7 +1,7 @@
 {
   "domain": "opentdb",
   "name": "Open Trivia Database",
-  "codeowners": [],
+  "codeowners": ["@andrewbackway"],
   "config_flow": true,
   "documentation": "https://github.com/andrewbackway/hacs-opentdb",
   "integration_type": "service",
