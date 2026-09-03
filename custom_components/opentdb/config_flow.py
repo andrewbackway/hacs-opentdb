@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-from datetime import time
 from typing import Any
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.config_entries import ConfigFlowResult
-from homeassistant.const import CONF_TIME
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
@@ -43,7 +40,7 @@ def _schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
 class OpenTDBConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
-    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> Any:
         errors: dict[str, str] = {}
         if user_input:
             try:
@@ -62,7 +59,7 @@ class OpenTDBConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @staticmethod
     @config_entries.options_flow
     class OptionsFlowHandler(config_entries.OptionsFlow):
-        async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        async def async_step_init(self, user_input: dict[str, Any] | None = None) -> Any:
             if user_input:
                 return self.async_create_entry(title="", data=user_input)
             defaults = {**self.config_entry.data, **self.config_entry.options}

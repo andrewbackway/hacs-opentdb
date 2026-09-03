@@ -10,8 +10,6 @@ Questions are fetched from the [Open Trivia Database API](https://opentdb.com/).
 
 [![Open your Home Assistant instance and show the HACS integration dialog](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=andrewbackway&repository=hacs-opentdb&category=integration)
 
-[![Add Open Trivia Database to HACS](https://img.shields.io/badge/HACS-Add%20integration-41BDF5.svg?logo=home-assistant)](https://github.com/hacs/integration?url=https%3A%2F%2Fgithub.com%2Fandrewbackway%2Fhacs-opentdb)
-
 After HACS finishes downloading the integration:
 
 1. Restart Home Assistant.
