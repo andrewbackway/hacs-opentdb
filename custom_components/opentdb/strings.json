@@ -1,0 +1,31 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Open Trivia Database Quiz",
+        "description": "Configure a logged-in Home Assistant trivia quiz.",
+        "data": {
+          "quiz_name": "Quiz name",
+          "amount": "Questions per quiz",
+          "category": "Category ID (blank for any)",
+          "difficulty": "Difficulty",
+          "type": "Question type",
+          "refresh_time": "Daily refresh time"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not retrieve questions from OpenTDB."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "quiz": { "name": "Quiz" },
+      "question": { "name": "Question" },
+      "score": { "name": "Score" },
+      "elapsed_time": { "name": "Elapsed time" },
+      "player_statistics": { "name": "Player statistics" }
+      ,"quiz_statistics": { "name": "Quiz statistics" }
+    }
+  }
+}

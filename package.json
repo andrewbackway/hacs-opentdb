@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "scripts": {
+    "build:card": "tsc -p card-src/tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Open Trivia Database Quiz",
+        "description": "Configure a trivia quiz.",
+        "data": {
+          "quiz_name": "Quiz name",
+          "amount": "Questions per quiz",
+          "category": "Category ID",
+          "difficulty": "Difficulty",
+          "type": "Question type",
+          "refresh_time": "Daily refresh time"
+        }
+      }
+    },
+    "error": { "cannot_connect": "Could not retrieve questions from OpenTDB." }
+  }
+}

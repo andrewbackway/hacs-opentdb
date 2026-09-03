@@ -1,0 +1,54 @@
+start_quiz:
+  name: Start quiz
+  description: Fetch a new question set and start it for the logged-in Home Assistant user.
+  target:
+    device:
+      integration: opentdb
+
+new_quiz:
+  name: New quiz
+  description: Immediately replace the current question set.
+  target:
+    device:
+      integration: opentdb
+
+submit_answer:
+  name: Submit answer
+  description: Submit the logged-in user's one allowed answer for a question.
+  target:
+    device:
+      integration: opentdb
+  fields:
+    question_index:
+      name: Question index
+      required: true
+      selector:
+        number:
+          min: 0
+          mode: box
+    answer:
+      name: Answer
+      required: true
+      selector:
+        text:
+
+next_question:
+  name: Next question
+  description: Advance after answer feedback.
+  target:
+    device:
+      integration: opentdb
+
+reset_quiz:
+  name: Reset quiz
+  description: Reset the logged-in user's progress without awarding completion.
+  target:
+    device:
+      integration: opentdb
+
+refresh:
+  name: Refresh quiz
+  description: Re-publish the current quiz state without replacing its question set.
+  target:
+    device:
+      integration: opentdb
