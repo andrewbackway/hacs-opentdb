@@ -1,6 +1,6 @@
 # OpenTDB Home Assistant Integration Plan
 
-> Status: **DRAFT - awaiting approval. No application code should be written until this plan is approved.**
+> Status: **EXPANDED HANDOVER PLAN - focused service dispatch fix and regression coverage.**
 > Target: A HACS-installable Home Assistant custom integration and bundled Lovelace card backed by [Open Trivia DB](https://opentdb.com/).
 
 ## 1. Goals and Scope
@@ -97,7 +97,7 @@ Only include optional query parameters when the user selected a value. Do not ex
 Each quiz config entry should support:
 
 | Field | Default | Notes |
-|---|---:|---|
+| --- | ---: | --- |
 | Quiz name | Required | Used for the device and entity naming. |
 | Number of questions | `10` | Validate against OpenTDB's supported range, normally 1-50. |
 | Category | Any category | Populate from OpenTDB's category endpoint where practical; retain an all-categories option. |
@@ -194,7 +194,7 @@ Privacy and lifecycle requirements:
 The sensor model should describe the quiz as a stateful activity, not treat the question text as the primary sensor state. Every quiz device exposes a small, stable set of sensors. The coordinator builds a user-specific view using the authenticated user associated with the latest service interaction and updates all related entities together.
 
 | Entity | State | Attributes and purpose |
-|---|---|---|
+| --- | --- | --- |
 | Quiz | `idle`, `active`, `feedback`, or `complete` | Canonical quiz state, quiz name, question number/total, set ID, active user progress, available actions, and last error. This is the card's primary entity. |
 | Question | `1`-based question number or `unknown` | One current question text, shuffled answer choices, category, difficulty, OpenTDB type, and question ID. Do not expose the correct answer before submission. |
 | Score | Current user's correct-answer count | Answered count, incorrect count, percentage, current question result, and whether the question is locked. |
@@ -211,7 +211,7 @@ User isolation is explicit: each logged-in HA user has an independent cursor and
 Register domain services once, with device/entity targeting matching the Wordnik service pattern:
 
 | Service | Purpose | Required context |
-|---|---|---|
+| --- | --- | --- |
 | `opentdb.start_quiz` | Fetch/start a new question set for the targeted quiz | Authenticated HA user |
 | `opentdb.new_quiz` | Explicitly discard the current set and fetch a fresh set | Authenticated HA user; confirm overwrite rules |
 | `opentdb.submit_answer` | Submit one answer for the current question | Authenticated HA user, question index, selected answer |
@@ -219,7 +219,7 @@ Register domain services once, with device/entity targeting matching the Wordnik
 | `opentdb.reset_quiz` | Reset the user's current progress without awarding completion | Authenticated HA user |
 | `opentdb.refresh` | Retry/reconcile current data without replacing the set | Optional authenticated context |
 
-The card should call these services with a targeted device/entity. The coordinator must validate that the target belongs to the caller's intended quiz, that the question index matches, and that the question has not already been answered. After `submit_answer` succeeds, the card shows correct/incorrect feedback briefly and then invokes the next transition automatically. `new_quiz` replaces the current set immediately, including an unfinished set; no `force` confirmation is required.
+The card should call these services with a targeted OpenTDB sensor entity. Home Assistant resolves that entity target to the owning config entry before the integration selects coordinators. The coordinator must validate that the target belongs to the caller's intended quiz, that the question index matches, and that the question has not already been answered. After `submit_answer` succeeds, the card shows correct/incorrect feedback briefly and then invokes the next transition automatically. `new_quiz` replaces the current set immediately, including an unfinished set; no `force` confirmation is required.
 
 Service schemas and translations should document that answers are one-shot and that `new_quiz` can discard unfinished progress. Consider requiring an explicit `force` field for destructive replacement of an active quiz.
 
@@ -318,18 +318,115 @@ Update `README.md` with installation, OpenTDB attribution/license information, c
 
 ### Service, sensor, and card tests
 
-- Device/entity targeting routes to the correct coordinator.
+- Sensor targeting routes to the correct coordinator and does not invoke other quiz entries.
 - Missing user context is rejected for scoring services.
 - Sensor states/attributes contain all requested current and statistics data without leaking unanswered correct answers.
 - Card renders idle, loading, active, feedback, completion, and error states.
 - Card answer controls lock after submission and call the correct service.
 - Responsive rendering, keyboard access, and icon feedback are manually verified.
 
+### 10.1 Confirmed service-dispatch regression
+
+The current integration has a confirmed async bug in `custom_components/opentdb/__init__.py`:
+`get_coordinators` calls `async_extract_config_entry_ids(hass, call)` without awaiting it, then
+iterates over the resulting coroutine. Service calls therefore fail with
+`'coroutine' object is not iterable` before a targeted coordinator method can run.
+
+#### Implementation steps
+
+1. Change the assignment inside `get_coordinators` to await the helper:
+
+   ```python
+   ids = await async_extract_config_entry_ids(hass, call)
+   ```
+
+2. Keep the change limited to the service dispatch path. Do not alter service names, target
+   schemas, coordinator APIs, or the fixed sensor description keys.
+3. Confirm all callers continue to await `get_coordinators`; the existing service handlers
+   already do this and require no structural change.
+4. Do not suppress the coroutine warning or convert the helper result synchronously. The
+   helper is asynchronous and must be awaited in the existing async handler.
+
+#### Service test setup
+
+Add `tests/test_services.py` using the Home Assistant custom-component test fixtures. The test
+module should:
+
+- Create one or more `ConfigEntry` instances with distinct entry IDs and valid OpenTDB settings.
+- Place test coordinators in `hass.data[DOMAIN]` and register the integration services through
+  `async_setup`.
+- Use `AsyncMock` coordinator methods so tests verify dispatch without network calls or storage
+  side effects.
+- Build service calls with a valid OpenTDB sensor entity target and an authenticated
+  `Context(user_id=...)`.
+- Assert the selected coordinator method is awaited and that the service call completes without
+  a coroutine-iteration exception.
+
+#### Required service matrix
+
+| Service | User context | Coordinator method | Minimum assertion |
+| --- | --- | --- | --- |
+| `start_quiz` | Required | `async_start_quiz(user_id)` | Targeted coordinator starts the quiz. |
+| `new_quiz` | Required | `async_start_quiz(user_id)` | Alias dispatches to the same start behavior. |
+| `submit_answer` | Required | `async_answer_question(user_id, question_index, answer)` | Index and answer are forwarded unchanged. |
+| `next_question` | Required | `async_next_question(user_id)` | Only the targeted quiz advances. |
+| `reset_quiz` | Required | `async_reset_quiz(user_id)` | Only the targeted user's reset path is invoked. |
+| `refresh` | Optional | `async_refresh()` | Refresh completes and does not require a user. |
+
+Add a separate unauthenticated-call assertion for each user-dependent service, or parameterize
+the test, to preserve the existing `ValueError` contract. The refresh test should prove that its
+optional user context remains optional.
+
+#### Target routing test
+
+Set up two OpenTDB quiz entries with different entry IDs and corresponding sensor entities.
+Invoke a service against the first quiz sensor and assert that only the first coordinator's
+method is awaited. Repeat with the second sensor if the fixture makes this inexpensive. This is
+the discriminating test for the bug: it exercises the awaited
+`async_extract_config_entry_ids` result rather than calling a coordinator directly.
+
+#### Entity identity regression
+
+Add or extend sensor/entity-registry coverage for two entries that have the same display quiz
+name. Home Assistant must assign unique entity IDs because the integration's stable unique IDs
+are based on the config-entry ID and the fixed sensor description key. Assert that:
+
+- No entity IDs collide between the entries.
+- Each entry creates the same six suffixes: `quiz`, `question`, `score`, `elapsed_time`,
+  `player_statistics`, and `quiz_statistics`.
+- The duplicate display name does not change those suffixes or the service target resolution.
+
+This test is intentionally separate from config-flow duplicate-name handling. The config flow
+currently rejects duplicate normalized names; the entity test protects the lower-level identity
+contract if entries with repeated display names are restored, imported, or created by a fixture.
+
+#### Acceptance criteria
+
+- `opentdb.start_quiz` succeeds for a valid OpenTDB sensor target and authenticated user.
+- `opentdb.new_quiz`, `submit_answer`, `next_question`, `reset_quiz`, and `refresh` complete
+  without `'coroutine' object is not iterable`.
+- A targeted service call affects only the coordinator/device associated with the selected
+  OpenTDB sensor.
+- User-dependent services reject calls without `context.user_id`; `refresh` does not.
+- Repeated quiz display names produce unique entity IDs while retaining all fixed sensor suffixes.
+- Focused service and entity tests pass, followed by the complete Python test suite and Ruff.
+
+#### Validation commands
+
+Run from the repository root after the edit:
+
+```powershell
+python -m pytest tests/test_services.py
+python -m pytest tests/test_services.py tests/test_sensor.py
+python -m pytest
+ruff check .
+```
+
 ## 11. Implementation Milestones
 
 - **M0 - Approval and decisions:** confirm this plan and minimum HA version.
 - **M1 - API foundation:** manifest, constants, async client, categories/questions, response-code/token/rate-limit handling, and API tests.
-- **M2 - Quiz backend:** config flow, coordinator, persisted session state, daily scheduler, services, and core sensors.
+- **M2 - Quiz backend:** config flow, coordinator, persisted session state, daily scheduler, services, core sensors, and the awaited service-target regression fix.
 - **M3 - User scoring:** HA context validation, per-user progress, one-attempt enforcement, lifetime/history stats, migration, and tests.
 - **M4 - Lovelace card:** bundled card, auto-registration, visual editor, answer interactions, completion view, responsive/accessibility behavior.
 - **M5 - Release hardening:** README, translations, CI, hassfest/HACS checks, manual HA test matrix, branding if desired, and first tagged release.
@@ -359,6 +456,18 @@ Update `README.md` with installation, OpenTDB attribution/license information, c
 5. **Minimum Home Assistant version:** use the Wordnik project's supported baseline unless implementation validation shows it is incompatible with the OpenTDB design; record the exact version in manifest and CI.
 6. **Stats retention:** retain daily and weekly history forever, alongside lifetime totals.
 
-## 13. Approval Gate
+## 13. Execution Order for This Handover
 
-No integration, card, release script, or other application code should be added until this document is explicitly approved. After approval, implementation should start with M1 and a focused API test suite before building the coordinator or frontend.
+This handover is intentionally narrower than the full product roadmap above. Execute it in this
+order:
+
+1. Apply the one-line await fix in `custom_components/opentdb/__init__.py`.
+2. Add the focused service regression and target-routing tests.
+3. Add or extend sensor/entity-registry coverage for repeated quiz names and stable suffixes.
+4. Run the focused tests immediately; repair only failures in this service/entity slice.
+5. Run the complete test suite and Ruff, then review the diff for unrelated changes.
+6. Update the card repository separately only if its current target selector or service payload
+  differs from the canonical contract documented here.
+
+The existing broader milestones remain the long-term roadmap. They should not block this focused
+fix, and this handover does not require a release, version bump, commit, or tag.

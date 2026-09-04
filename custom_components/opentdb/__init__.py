@@ -66,7 +66,7 @@ def _register_services(hass: HomeAssistant) -> None:
         return
 
     async def get_coordinators(call: ServiceCall) -> list[QuizDataUpdateCoordinator]:
-        ids = async_extract_config_entry_ids(hass, call)
+        ids = await async_extract_config_entry_ids(hass, call)
         coordinators = hass.data[DOMAIN]
         return [coordinators[entry_id] for entry_id in ids if entry_id in coordinators]
 
