@@ -38,7 +38,7 @@ Each config entry creates one quiz device. Multiple quizzes can be configured wi
 | **Category** | No | Any category | OpenTDB category ID as a string, for example `9` for General Knowledge. Leave blank for any category. See the [OpenTDB category list](https://opentdb.com/api_category.php). |
 | **Difficulty** | No | Any difficulty | `easy`, `medium`, or `hard`. Leave blank for any difficulty. |
 | **Question type** | No | Any type | `multiple` for four choices or `boolean` for True/False. Leave blank for either type. |
-| **Daily refresh time** | Yes | `00:00:00` | Time in 24-hour `HH:MM:SS` format at which the current state is republished. This does not download a new question set. |
+| **Daily refresh time** | Yes | `00:00:00` | Time in 24-hour `HH:MM:SS` format at which a new shared question set is downloaded for the day. |
 
 The selected question combination is checked against OpenTDB when the integration is configured. A category is an OpenTDB numeric ID, not a category name. OpenTDB can return fewer questions than requested when its database does not have enough matching questions.
 
@@ -52,12 +52,13 @@ The entity ID prefix is based on the quiz name. Home Assistant normally creates 
 
 | Sensor | State | Attributes |
 | --- | --- | --- |
-| **Quiz** | `idle`, `active`, `feedback`, or `complete` | `quiz_name`, `set_id`, `question_index`, `total_questions`, `feedback` |
-| **Question** | Current question text | `category`, `type`, `difficulty`, `question`, `correct_answer` is intentionally omitted, and `answers` contains the shuffled choices |
-| **Score** | Correct answers | `answered`, `correct`, `incorrect`, `percentage` |
+| **Quiz** | `idle`, `question`, `feedback`, or `complete` | `game` (a self-contained payload consumed by the card: question, feedback, score, player, and leaderboard), plus `quiz_name`, `set_id`, `question_index`, `total_questions`, `feedback` |
+| **Question** | Current question text | `category`, `type`, `difficulty`, `question`; `correct_answer` is intentionally omitted, and `answers` contains the shuffled choices |
+| **Score** | Correct answers | `answered`, `correct`, `incorrect`, `percentage`, `points`, `streak`, `best_streak` |
 | **Elapsed time** | Seconds since the quiz started | Unit: seconds (`s`) |
-| **Player statistics** | Lifetime questions answered by the logged-in player | Player lifetime counters and percentage |
+| **Player statistics** | Lifetime questions answered by the logged-in player | Player lifetime counters, percentage, `total_points`, `best_streak`, and `daily_play_streak` |
 | **Quiz statistics** | Aggregate questions answered by all players | Aggregate counters and percentage |
+| **Leaderboard** | Number of ranked players | `leaderboard` list ranked by points, each with `name`, `points_today`, `points_total`, `accuracy`, and `best_streak` |
 
 The question sensor never exposes `correct_answer` while a question is active. Progress and statistics are stored in Home Assistant's storage and survive restarts. Statistics are maintained per Home Assistant user, while quiz statistics aggregate the stored player totals.
 
@@ -79,15 +80,15 @@ All services target a quiz **device** unless stated otherwise. In the UI, select
 
 ### Start or replace a quiz
 
-`opentdb.start_quiz` and `opentdb.new_quiz` fetch a new question set and start it for the logged-in user. Starting a new set replaces the current set and unfinished progress for every player, while lifetime statistics remain.
+`opentdb.start_quiz` starts or resumes the day's shared question set for the logged-in user, fetching a set only if none exists yet. `opentdb.new_quiz` force-fetches a brand-new shared set, replacing the current set and unfinished progress for every player. Lifetime statistics are always retained.
 
 ```yaml
 action: opentdb.start_quiz
 target:
-	device_id: YOUR_QUIZ_DEVICE_ID
+  device_id: YOUR_QUIZ_DEVICE_ID
 ```
 
-`opentdb.new_quiz` has the same behavior and is useful as the action behind a "new quiz" control.
+`opentdb.new_quiz` is the action behind a "new quiz" control.
 
 ### Submit an answer
 
@@ -96,10 +97,10 @@ target:
 ```yaml
 action: opentdb.submit_answer
 target:
-	device_id: YOUR_QUIZ_DEVICE_ID
+  device_id: YOUR_QUIZ_DEVICE_ID
 data:
-	question_index: 0
-	answer: "The answer text"
+  question_index: 0
+  answer: "The answer text"
 ```
 
 Only one answer is accepted for a question. The action requires the quiz to be active and the index to match the current question.
@@ -111,7 +112,7 @@ Only one answer is accepted for a question. The action requires the quiz to be a
 ```yaml
 action: opentdb.next_question
 target:
-	device_id: YOUR_QUIZ_DEVICE_ID
+  device_id: YOUR_QUIZ_DEVICE_ID
 ```
 
 ### Reset a player's progress
@@ -121,20 +122,32 @@ target:
 ```yaml
 action: opentdb.reset_quiz
 target:
-	device_id: YOUR_QUIZ_DEVICE_ID
+  device_id: YOUR_QUIZ_DEVICE_ID
 ```
 
 ### Refresh published state
 
-`opentdb.refresh` republishes the current state and does not replace questions or reset progress. It is also the action run at the configured daily refresh time. Unlike the other services, it does not require an authenticated user.
+`opentdb.refresh` republishes the current state and does not replace questions or reset progress. Unlike the other services, it does not require an authenticated user. (The configured daily refresh time downloads a new shared question set automatically.)
 
 ```yaml
 action: opentdb.refresh
 target:
-	device_id: YOUR_QUIZ_DEVICE_ID
+  device_id: YOUR_QUIZ_DEVICE_ID
 ```
 
-The `start_quiz`, `new_quiz`, `submit_answer`, `next_question`, and `reset_quiz` actions require a logged-in Home Assistant user. Calls without a user context fail because the integration cannot identify which player's progress to change.
+### Refresh quiz questions
+
+`opentdb.refresh_questions` is a deprecated alias of `opentdb.new_quiz`. It fetches a new question set and starts it for the logged-in user.
+It replaces the current question set and unfinished progress for every player, while retaining
+lifetime statistics.
+
+```yaml
+action: opentdb.refresh_questions
+target:
+  device_id: YOUR_QUIZ_DEVICE_ID
+```
+
+The `start_quiz`, `new_quiz`, `refresh_questions`, `submit_answer`, `next_question`, and `reset_quiz` actions require a logged-in Home Assistant user. Calls without a user context fail because the integration cannot identify which player's progress to change.
 
 ## OpenTDB limits and attribution
 

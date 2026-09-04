@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from homeassistant.core import Context
@@ -10,6 +10,7 @@ from custom_components.opentdb.const import (
     SERVICE_NEW,
     SERVICE_NEXT,
     SERVICE_REFRESH,
+    SERVICE_REFRESH_QUESTIONS,
     SERVICE_RESET,
     SERVICE_START,
 )
@@ -25,19 +26,21 @@ async def _register_test_services(hass, monkeypatch, coordinators):
 
 
 @pytest.mark.parametrize(
-    ("service", "method", "data"),
+    ("service", "method", "data", "expected_args", "expected_kwargs"),
     [
-        (SERVICE_START, "async_start_quiz", {}),
-        (SERVICE_NEW, "async_start_quiz", {}),
-        (SERVICE_ANSWER, "async_answer_question", {"question_index": 2, "answer": "Answer"}),
-        (SERVICE_NEXT, "async_next_question", {}),
-        (SERVICE_RESET, "async_reset_quiz", {}),
+        (SERVICE_START, "async_start_quiz", {}, ("user_1",), {}),
+        (SERVICE_NEW, "async_start_quiz", {}, ("user_1",), {"force_new": True}),
+        (SERVICE_REFRESH_QUESTIONS, "async_start_quiz", {}, ("user_1",), {"force_new": True}),
+        (SERVICE_ANSWER, "async_answer_question", {"question_index": 2, "answer": "Answer"}, ("user_1", 2, "Answer"), {}),
+        (SERVICE_NEXT, "async_next_question", {}, ("user_1",), {}),
+        (SERVICE_RESET, "async_reset_quiz", {}, ("user_1",), {}),
     ],
 )
 async def test_user_services_await_target_resolution(
-    hass, monkeypatch, service, method, data
+    hass, monkeypatch, service, method, data, expected_args, expected_kwargs
 ):
     coordinator = AsyncMock()
+    coordinator.set_player_name = MagicMock()
     extract_ids = await _register_test_services(hass, monkeypatch, {"entry_1": coordinator})
 
     await hass.services.async_call(
@@ -49,12 +52,7 @@ async def test_user_services_await_target_resolution(
     )
 
     extract_ids.assert_awaited_once()
-    expected = (
-        ("user_1", 2, "Answer")
-        if method == "async_answer_question"
-        else ("user_1",)
-    )
-    getattr(coordinator, method).assert_awaited_once_with(*expected)
+    getattr(coordinator, method).assert_awaited_once_with(*expected_args, **expected_kwargs)
 
 
 async def test_refresh_awaits_target_resolution_without_user(hass, monkeypatch):
@@ -93,7 +91,10 @@ async def test_targeted_service_only_calls_selected_coordinator(hass, monkeypatc
     second.async_next_question.assert_not_awaited()
 
 
-@pytest.mark.parametrize("service", [SERVICE_START, SERVICE_NEW, SERVICE_ANSWER, SERVICE_NEXT, SERVICE_RESET])
+@pytest.mark.parametrize(
+    "service",
+    [SERVICE_START, SERVICE_NEW, SERVICE_REFRESH_QUESTIONS, SERVICE_ANSWER, SERVICE_NEXT, SERVICE_RESET],
+)
 async def test_user_services_require_authenticated_context(hass, monkeypatch, service):
     coordinator = AsyncMock()
     await _register_test_services(hass, monkeypatch, {"entry_1": coordinator})

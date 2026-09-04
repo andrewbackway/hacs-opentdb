@@ -22,12 +22,13 @@ class QuizSensorDescription(SensorEntityDescription):
 
 
 SENSORS: tuple[QuizSensorDescription, ...] = (
-    QuizSensorDescription(key="quiz", translation_key="quiz", icon="mdi:gamepad-variant", value_fn=lambda data: data.get("state"), attributes_fn=lambda data: {key: data.get(key) for key in ("quiz_name", "set_id", "question_index", "total_questions", "feedback")}),
+    QuizSensorDescription(key="quiz", translation_key="quiz", icon="mdi:gamepad-variant", value_fn=lambda data: data.get("state"), attributes_fn=lambda data: {"game": data.get("game"), **{key: data.get(key) for key in ("quiz_name", "set_id", "question_index", "total_questions", "feedback")}}),
     QuizSensorDescription(key="question", translation_key="question", icon="mdi:help-circle-outline", value_fn=lambda data: (data.get("question") or {}).get("question"), attributes_fn=lambda data: data.get("question") or {}),
     QuizSensorDescription(key="score", translation_key="score", icon="mdi:trophy-outline", value_fn=lambda data: (data.get("score") or {}).get("correct", 0), attributes_fn=lambda data: data.get("score") or {}),
     QuizSensorDescription(key="elapsed_time", translation_key="elapsed_time", icon="mdi:timer-outline", native_unit_of_measurement="s", value_fn=lambda data: data.get("elapsed_seconds", 0)),
     QuizSensorDescription(key="player_statistics", translation_key="player_statistics", icon="mdi:account-chart-outline", value_fn=lambda data: (data.get("player_stats") or {}).get("questions", 0), attributes_fn=lambda data: data.get("player_stats") or {}),
     QuizSensorDescription(key="quiz_statistics", translation_key="quiz_statistics", icon="mdi:chart-box-outline", value_fn=lambda data: (data.get("quiz_stats") or {}).get("questions", 0), attributes_fn=lambda data: data.get("quiz_stats") or {}),
+    QuizSensorDescription(key="leaderboard", translation_key="leaderboard", icon="mdi:podium", value_fn=lambda data: len(data.get("leaderboard") or []), attributes_fn=lambda data: {"leaderboard": data.get("leaderboard") or []}),
 )
 
 

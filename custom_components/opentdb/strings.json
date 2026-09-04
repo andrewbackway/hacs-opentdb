@@ -26,6 +26,7 @@
       "elapsed_time": { "name": "Elapsed time" },
       "player_statistics": { "name": "Player statistics" }
       ,"quiz_statistics": { "name": "Quiz statistics" }
+      ,"leaderboard": { "name": "Leaderboard" }
     }
   }
 }

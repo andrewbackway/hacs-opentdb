@@ -1,13 +1,13 @@
 start_quiz:
   name: Start quiz
-  description: Fetch a new question set and start it for the logged-in Home Assistant user.
+  description: Start or resume today's shared question set for the logged-in user (fetches a set if none exists yet).
   target:
     device:
       integration: opentdb
 
 new_quiz:
   name: New quiz
-  description: Immediately replace the current question set.
+  description: Force-fetch a brand-new shared question set and start it.
   target:
     device:
       integration: opentdb
@@ -49,6 +49,13 @@ reset_quiz:
 refresh:
   name: Refresh quiz
   description: Re-publish the current quiz state without replacing its question set.
+  target:
+    device:
+      integration: opentdb
+
+refresh_questions:
+  name: Refresh quiz questions
+  description: Deprecated alias of new_quiz. Force-fetch a brand-new shared question set and start it.
   target:
     device:
       integration: opentdb

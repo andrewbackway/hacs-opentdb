@@ -218,6 +218,7 @@ Register domain services once, with device/entity targeting matching the Wordnik
 | `opentdb.next_question` | Reserved backend action; normally the card advances automatically after a short feedback state | Authenticated HA user |
 | `opentdb.reset_quiz` | Reset the user's current progress without awarding completion | Authenticated HA user |
 | `opentdb.refresh` | Retry/reconcile current data without replacing the set | Optional authenticated context |
+| `opentdb.refresh_questions` | Fetch a new question set and replace the current set | Authenticated HA user |
 
 The card should call these services with a targeted OpenTDB sensor entity. Home Assistant resolves that entity target to the owning config entry before the integration selects coordinators. The coordinator must validate that the target belongs to the caller's intended quiz, that the question index matches, and that the question has not already been answered. After `submit_answer` succeeds, the card shows correct/incorrect feedback briefly and then invokes the next transition automatically. `new_quiz` replaces the current set immediately, including an unfinished set; no `force` confirmation is required.
 
@@ -405,6 +406,7 @@ contract if entries with repeated display names are restored, imported, or creat
 - `opentdb.start_quiz` succeeds for a valid OpenTDB sensor target and authenticated user.
 - `opentdb.new_quiz`, `submit_answer`, `next_question`, `reset_quiz`, and `refresh` complete
   without `'coroutine' object is not iterable`.
+- `opentdb.refresh_questions` fetches a new question set for the authenticated user.
 - A targeted service call affects only the coordinator/device associated with the selected
   OpenTDB sensor.
 - User-dependent services reject calls without `context.user_id`; `refresh` does not.

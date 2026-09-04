@@ -30,8 +30,10 @@ def _schema(categories: list[dict[str, Any]], defaults: dict[str, Any] | None = 
         {"value": "", "label": "Any category"},
         *[
             {"value": str(category["id"]), "label": str(category["name"])}
-            for category in categories
-            if "id" in category and "name" in category
+            for category in sorted(
+                (category for category in categories if "id" in category and "name" in category),
+                key=lambda category: str(category["name"]).casefold(),
+            )
         ],
     ]
     return vol.Schema(
