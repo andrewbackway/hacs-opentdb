@@ -1,12 +1,8 @@
 from __future__ import annotations
 
-import logging
-import os
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.components.frontend import add_extra_js_url
-from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_track_time_change
@@ -23,19 +19,12 @@ from .const import (
     SERVICE_REFRESH,
     SERVICE_RESET,
     SERVICE_START,
-    VERSION,
 )
 from .coordinator import QuizDataUpdateCoordinator
-
-_LOGGER = logging.getLogger(__name__)
-_CARD_URL = f"/{DOMAIN}/opentdb-card.js"
-_FRONTEND_KEY = f"{DOMAIN}_frontend_registered"
-
 
 async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     hass.data.setdefault(DOMAIN, {})
     _register_services(hass)
-    await _register_frontend(hass)
     return True
 
 
@@ -70,18 +59,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if unloaded:
         hass.data[DOMAIN].pop(entry.entry_id, None)
     return unloaded
-
-
-async def _register_frontend(hass: HomeAssistant) -> None:
-    if hass.data.get(_FRONTEND_KEY):
-        return
-    path = hass.config.path(f"custom_components/{DOMAIN}/www/opentdb-card.js")
-    if not os.path.isfile(path):
-        _LOGGER.error("Bundled OpenTDB card is missing: %s", path)
-        return
-    await hass.http.async_register_static_paths([StaticPathConfig(_CARD_URL, path, False)])
-    add_extra_js_url(hass, f"{_CARD_URL}?v={VERSION}")
-    hass.data[_FRONTEND_KEY] = True
 
 
 def _register_services(hass: HomeAssistant) -> None:

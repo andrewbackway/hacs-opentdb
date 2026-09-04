@@ -1,6 +1,6 @@
 # Open Trivia Database for Home Assistant
 
-Configurable Open Trivia Database quizzes for Home Assistant. Each configured quiz is a separate device with sensors for the current question, score, elapsed time, player statistics, and aggregate quiz statistics. A bundled Lovelace card provides the complete quiz workflow from a dashboard.
+Configurable Open Trivia Database quizzes for Home Assistant. Each configured quiz is a separate device with sensors for the current question, score, elapsed time, player statistics, and aggregate quiz statistics.
 
 Questions are fetched from the [Open Trivia Database API](https://opentdb.com/). The integration uses OpenTDB's default response encoding and shuffles answer choices before exposing them to Home Assistant.
 
@@ -63,9 +63,7 @@ The question sensor never exposes `correct_answer` while a question is active. P
 
 ## Lovelace card
 
-The integration registers its JavaScript card automatically. No separate Lovelace resource is required.
-
-Add a **Manual** card with this YAML:
+The Lovelace card is maintained in the separate [OpenTDB card repository](https://github.com/andrewbackway/hacs-opentdb-card). Install that repository through HACS as a **Dashboard** repository, then add a **Manual** card with this YAML:
 
 ```yaml
 type: custom:opentdb-card
@@ -73,15 +71,7 @@ entity: sensor.trivia_quiz_quiz
 title: Evening trivia
 ```
 
-### Card properties
-
-| Property | Required | Type | Description |
-| --- | --- | --- | --- |
-| `type` | Yes | string | Must be `custom:opentdb-card`. |
-| `entity` | Yes | entity ID | The quiz sensor, normally ending in `_quiz`, for example `sensor.trivia_quiz_quiz`. The card derives the question and score entities from this ID. |
-| `title` | No | string | Heading displayed by the card. Defaults to the configured quiz name, then `Trivia Quiz`. |
-
-The card displays the current question and shuffled answers, disables answers after submission, shows feedback, advances after a short delay, and shows the final percentage and elapsed time. The dashboard must run in a logged-in Home Assistant user context because quiz actions are user-specific.
+The dashboard must run in a logged-in Home Assistant user context because quiz actions are user-specific.
 
 ## Services
 
@@ -153,13 +143,6 @@ OpenTDB is a free external service. Its rate limits, availability, question cove
 Open Trivia Database content is provided under the [Creative Commons Attribution-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-sa/4.0/). OpenTDB's API is free to use and subject to its [current service terms](https://opentdb.com/api_config.php).
 
 ## Development
-
-Build the bundled card after changing `card-src/opentdb-card.ts`:
-
-```powershell
-npm ci
-npm run build:card
-```
 
 Run the Python checks with the project's configured tools:
 

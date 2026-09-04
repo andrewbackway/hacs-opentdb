@@ -13,8 +13,7 @@ $ErrorActionPreference = "Stop"
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $ManifestPath = Join-Path $RepoRoot "custom_components/opentdb/manifest.json"
 $ConstPath = Join-Path $RepoRoot "custom_components/opentdb/const.py"
-$CardPath = Join-Path $RepoRoot "custom_components/opentdb/www/opentdb-card.js"
-foreach ($path in @($ManifestPath, $ConstPath, $CardPath)) {
+foreach ($path in @($ManifestPath, $ConstPath)) {
     if (-not (Test-Path $path)) { throw "Required file not found: $path" }
 }
 

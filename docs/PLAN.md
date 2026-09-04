@@ -52,7 +52,7 @@ flowchart TD
 hacs-opentdb/
 ├── custom_components/
 │   └── opentdb/
-│       ├── __init__.py             # setup, coordinator wiring, services, card registration
+│       ├── __init__.py             # setup, coordinator wiring, and services
 │       ├── api.py                  # async OpenTDB client and API error mapping
 │       ├── config_flow.py          # setup and per-quiz options flow
 │       ├── const.py                # domain, defaults, endpoint and storage constants
@@ -63,13 +63,8 @@ hacs-opentdb/
 │       ├── strings.json
 │       ├── translations/
 │       │   └── en.json
-│       └── www/
-│           └── opentdb-card.js      # bundled Lovelace card
 ├── docs/
 │   └── PLAN.md
-├── card-src/
-│   ├── opentdb-card.ts           # Lit-based card source and HA card editor
-│   └── tsconfig.json
 ├── scripts/
 │   └── release.ps1               # version, commit, tag, push, and GitHub release workflow
 ├── tests/
@@ -85,7 +80,7 @@ hacs-opentdb/
 └── .github/workflows/
 ```
 
-The card source must be TypeScript, built with the project's chosen Node toolchain into the tracked `custom_components/opentdb/www/opentdb-card.js` artifact. One HACS installation must deliver both the backend and card. Adapt `C:\git\hacs-wordnik\scripts\release.ps1` for the `opentdb` paths, version constant, card artifact, and repository metadata; preserve its clean-tree checks, semantic-version bumping, optional no-push/no-release switches, tagging, and GitHub CLI release flow.
+The Lovelace card is maintained in the separate `andrewbackway/hacs-opentdb-card` repository. This repository contains only the Home Assistant integration; its release script versions and publishes the integration without a frontend artifact.
 
 ## 3. OpenTDB API Integration
 
@@ -246,7 +241,7 @@ Each device should be independently targetable from a dashboard, and one Home As
 
 ## 8. Lovelace Card
 
-Bundle and auto-register `opentdb-card.js` using the same static-resource approach as Wordnik. The card should support selecting either a quiz device/config entry or a quiz entity, with a visual editor and YAML configuration for advanced users.
+Maintain the card in `andrewbackway/hacs-opentdb-card` as a separate HACS Dashboard repository. The card should target the quiz entity and use the integration's services for the interactive workflow.
 
 ### 8.1 Configuration
 
