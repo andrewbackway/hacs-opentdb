@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 
+import voluptuous as vol
+from homeassistant.components import websocket_api
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.helpers.service import async_extract_config_entry_ids
 
@@ -23,10 +27,13 @@ from .const import (
 )
 from .coordinator import QuizDataUpdateCoordinator
 
+_LOGGER = logging.getLogger(__name__)
+
 
 async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     hass.data.setdefault(DOMAIN, {})
     _register_services(hass)
+    _register_websocket_commands(hass)
     return True
 
 
@@ -127,3 +134,100 @@ def _register_services(hass: HomeAssistant) -> None:
     hass.services.async_register(DOMAIN, SERVICE_RESET, reset)
     hass.services.async_register(DOMAIN, SERVICE_REFRESH, refresh)
     hass.services.async_register(DOMAIN, SERVICE_REFRESH_QUESTIONS, new_quiz)
+
+
+def _register_websocket_commands(hass: HomeAssistant) -> None:
+    """Register card commands that return only the caller's quiz state."""
+
+    def get_coordinator(quiz_id: str) -> QuizDataUpdateCoordinator:
+        entity = er.async_get(hass).async_get(quiz_id)
+        if (
+            entity is None
+            or entity.config_entry_id not in hass.data[DOMAIN]
+            or entity.unique_id != f"{entity.config_entry_id}_quiz"
+        ):
+            raise ValueError("The selected OpenTDB quiz is unavailable")
+        return hass.data[DOMAIN][entity.config_entry_id]
+
+    async def player_name(user_id: str) -> str:
+        user = await hass.auth.async_get_user(user_id)
+        return user.name if user and user.name else "Player"
+
+    async def run_command(
+        connection: websocket_api.ActiveConnection,
+        msg: dict[str, Any],
+        action: str,
+    ) -> None:
+        try:
+            coordinator = get_coordinator(msg["quiz_id"])
+            user_id = connection.user.id
+            coordinator.set_player_name(user_id, await player_name(user_id))
+            if action == "start":
+                await coordinator.async_start_quiz(user_id)
+            elif action == "new":
+                await coordinator.async_start_quiz(user_id, force_new=True)
+            else:
+                coordinator.validate_session(user_id, msg["session_id"])
+                if action == "submit":
+                    await coordinator.async_answer_question(
+                        user_id, msg["question_index"], msg["answer"]
+                    )
+                else:
+                    await coordinator.async_next_question(user_id)
+            connection.send_result(msg["id"], coordinator._build_view(user_id))
+        except ValueError as err:
+            connection.send_error(msg["id"], "invalid_request", str(err))
+        except Exception:
+            _LOGGER.exception("OpenTDB WebSocket command failed")
+            connection.send_error(msg["id"], "unknown_error", "Unable to update quiz session")
+
+    @websocket_api.websocket_command(
+        {vol.Required("type"): "opentdb/session/start", vol.Required("quiz_id"): str}
+    )
+    @websocket_api.async_response
+    async def websocket_start(
+        hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+    ) -> None:
+        await run_command(connection, msg, "start")
+
+    @websocket_api.websocket_command(
+        {vol.Required("type"): "opentdb/session/new", vol.Required("quiz_id"): str}
+    )
+    @websocket_api.async_response
+    async def websocket_new(
+        hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+    ) -> None:
+        await run_command(connection, msg, "new")
+
+    @websocket_api.websocket_command(
+        {
+            vol.Required("type"): "opentdb/session/submit",
+            vol.Required("quiz_id"): str,
+            vol.Required("session_id"): str,
+            vol.Required("question_index"): int,
+            vol.Required("answer"): str,
+        }
+    )
+    @websocket_api.async_response
+    async def websocket_submit(
+        hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+    ) -> None:
+        await run_command(connection, msg, "submit")
+
+    @websocket_api.websocket_command(
+        {
+            vol.Required("type"): "opentdb/session/next",
+            vol.Required("quiz_id"): str,
+            vol.Required("session_id"): str,
+        }
+    )
+    @websocket_api.async_response
+    async def websocket_next(
+        hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+    ) -> None:
+        await run_command(connection, msg, "next")
+
+    websocket_api.async_register_command(hass, websocket_start)
+    websocket_api.async_register_command(hass, websocket_new)
+    websocket_api.async_register_command(hass, websocket_submit)
+    websocket_api.async_register_command(hass, websocket_next)

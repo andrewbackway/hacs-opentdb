@@ -222,7 +222,13 @@ class QuizDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             user_id,
             self._new_player(user_id),
         )
+        player.setdefault("session_id", secrets.token_urlsafe(16))
         return player
+
+    def validate_session(self, user_id: str, session_id: str) -> None:
+        """Reject session tokens that do not belong to the authenticated player."""
+        if not secrets.compare_digest(self._player(user_id)["session_id"], session_id):
+            raise ValueError("The quiz session is no longer valid")
 
     def _new_player(self, user_id: str) -> dict[str, Any]:
         now = dt_util.utcnow().isoformat()
@@ -347,6 +353,7 @@ class QuizDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "leaderboard": leaderboard,
         }
         return {
+            "session_id": player.get("session_id"),
             "state": state,
             "quiz_name": quiz_name,
             "set_id": self._stored.get("set_id"),
