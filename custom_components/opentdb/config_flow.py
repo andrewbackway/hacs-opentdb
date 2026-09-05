@@ -4,7 +4,7 @@ from typing import Any
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import callback
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
@@ -39,11 +39,19 @@ def _schema(categories: list[dict[str, Any]], defaults: dict[str, Any] | None = 
     return vol.Schema(
         {
             vol.Required(CONF_QUIZ_NAME, default=values.get(CONF_QUIZ_NAME, "Trivia Quiz")): str,
-            vol.Required(CONF_AMOUNT, default=values.get(CONF_AMOUNT, DEFAULT_AMOUNT)): vol.All(vol.Coerce(int), vol.Range(min=MIN_AMOUNT, max=MAX_AMOUNT)),
-            vol.Required(CONF_CATEGORY, default=values.get(CONF_CATEGORY, "")): selector.SelectSelector(
-                selector.SelectSelectorConfig(options=category_options, mode=selector.SelectSelectorMode.DROPDOWN)
+            vol.Required(CONF_AMOUNT, default=values.get(CONF_AMOUNT, DEFAULT_AMOUNT)): vol.All(
+                vol.Coerce(int), vol.Range(min=MIN_AMOUNT, max=MAX_AMOUNT)
             ),
-            vol.Required(CONF_DIFFICULTY, default=values.get(CONF_DIFFICULTY, "")): selector.SelectSelector(
+            vol.Required(
+                CONF_CATEGORY, default=values.get(CONF_CATEGORY, "")
+            ): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=category_options, mode=selector.SelectSelectorMode.DROPDOWN
+                )
+            ),
+            vol.Required(
+                CONF_DIFFICULTY, default=values.get(CONF_DIFFICULTY, "")
+            ): selector.SelectSelector(
                 selector.SelectSelectorConfig(
                     options=[
                         {"value": "", "label": "Any difficulty"},
@@ -64,7 +72,9 @@ def _schema(categories: list[dict[str, Any]], defaults: dict[str, Any] | None = 
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
-            vol.Required(CONF_REFRESH_TIME, default=values.get(CONF_REFRESH_TIME, DEFAULT_REFRESH_TIME)): str,
+            vol.Required(
+                CONF_REFRESH_TIME, default=values.get(CONF_REFRESH_TIME, DEFAULT_REFRESH_TIME)
+            ): str,
         }
     )
 
@@ -83,15 +93,22 @@ class OpenTDBConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input:
             try:
                 await client.async_fetch_questions(
-                    user_input[CONF_AMOUNT], user_input.get(CONF_CATEGORY), user_input.get(CONF_DIFFICULTY), user_input.get(CONF_TYPE)
+                    user_input[CONF_AMOUNT],
+                    user_input.get(CONF_CATEGORY),
+                    user_input.get(CONF_DIFFICULTY),
+                    user_input.get(CONF_TYPE),
                 )
             except OpenTDBError:
                 errors["base"] = "cannot_connect"
             else:
-                await self.async_set_unique_id(f"{DOMAIN}_{user_input[CONF_QUIZ_NAME].strip().lower().replace(' ', '_')}")
+                await self.async_set_unique_id(
+                    f"{DOMAIN}_{user_input[CONF_QUIZ_NAME].strip().lower().replace(' ', '_')}"
+                )
                 self._abort_if_unique_id_configured()
                 return self.async_create_entry(title=user_input[CONF_QUIZ_NAME], data=user_input)
-        return self.async_show_form(step_id="user", data_schema=_schema(categories, user_input), errors=errors)
+        return self.async_show_form(
+            step_id="user", data_schema=_schema(categories, user_input), errors=errors
+        )
 
     class OptionsFlowHandler(config_entries.OptionsFlow):
         async def async_step_init(self, user_input: dict[str, Any] | None = None) -> Any:

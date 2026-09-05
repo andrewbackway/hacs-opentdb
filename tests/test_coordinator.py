@@ -61,4 +61,3 @@ def test_update_play_streak_resets_after_a_gap():
     QuizDataUpdateCoordinator._update_play_streak(lifetime, "2026-01-03")
 
     assert lifetime["daily_play_streak"] == 1
-

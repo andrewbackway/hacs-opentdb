@@ -31,7 +31,13 @@ async def _register_test_services(hass, monkeypatch, coordinators):
         (SERVICE_START, "async_start_quiz", {}, ("user_1",), {}),
         (SERVICE_NEW, "async_start_quiz", {}, ("user_1",), {"force_new": True}),
         (SERVICE_REFRESH_QUESTIONS, "async_start_quiz", {}, ("user_1",), {"force_new": True}),
-        (SERVICE_ANSWER, "async_answer_question", {"question_index": 2, "answer": "Answer"}, ("user_1", 2, "Answer"), {}),
+        (
+            SERVICE_ANSWER,
+            "async_answer_question",
+            {"question_index": 2, "answer": "Answer"},
+            ("user_1", 2, "Answer"),
+            {},
+        ),
         (SERVICE_NEXT, "async_next_question", {}, ("user_1",), {}),
         (SERVICE_RESET, "async_reset_quiz", {}, ("user_1",), {}),
     ],
@@ -93,7 +99,14 @@ async def test_targeted_service_only_calls_selected_coordinator(hass, monkeypatc
 
 @pytest.mark.parametrize(
     "service",
-    [SERVICE_START, SERVICE_NEW, SERVICE_REFRESH_QUESTIONS, SERVICE_ANSWER, SERVICE_NEXT, SERVICE_RESET],
+    [
+        SERVICE_START,
+        SERVICE_NEW,
+        SERVICE_REFRESH_QUESTIONS,
+        SERVICE_ANSWER,
+        SERVICE_NEXT,
+        SERVICE_RESET,
+    ],
 )
 async def test_user_services_require_authenticated_context(hass, monkeypatch, service):
     coordinator = AsyncMock()

@@ -23,6 +23,7 @@ from .const import (
 )
 from .coordinator import QuizDataUpdateCoordinator
 
+
 async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     hass.data.setdefault(DOMAIN, {})
     _register_services(hass)
@@ -45,13 +46,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     refresh = entry.options.get(CONF_REFRESH_TIME, entry.data.get(CONF_REFRESH_TIME, "00:00:00"))
     hour, minute, second = (int(value) for value in refresh.split(":"))
     entry.async_on_unload(
-            async_track_time_change(
-                hass,
-                lambda _now: hass.async_create_task(coordinator.async_daily_refresh()),
-                hour=hour,
-                minute=minute,
-                second=second,
-            )
+        async_track_time_change(
+            hass,
+            lambda _now: hass.async_create_task(coordinator.async_daily_refresh()),
+            hour=hour,
+            minute=minute,
+            second=second,
+        )
     )
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
@@ -101,7 +102,9 @@ def _register_services(hass: HomeAssistant) -> None:
         name = await player_name(user_id)
         for coordinator in await get_coordinators(call):
             coordinator.set_player_name(user_id, name)
-            await coordinator.async_answer_question(user_id, int(call.data["question_index"]), call.data["answer"])
+            await coordinator.async_answer_question(
+                user_id, int(call.data["question_index"]), call.data["answer"]
+            )
 
     async def next_question(call: ServiceCall) -> None:
         user_id = await require_user(call)

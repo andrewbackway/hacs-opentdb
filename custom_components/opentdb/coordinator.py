@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from copy import deepcopy
-from datetime import datetime, timedelta
 import logging
 import secrets
+from copy import deepcopy
+from datetime import datetime, timedelta
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -38,7 +38,11 @@ class QuizDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.entry = entry
         self.api = api
         self.store = Store(hass, STORAGE_VERSION, f"{DOMAIN}_{entry.entry_id}")
-        self._stored: dict[str, Any] = {"version": STORAGE_VERSION, "players": {}, "lifetime_stats": {}}
+        self._stored: dict[str, Any] = {
+            "version": STORAGE_VERSION,
+            "players": {},
+            "lifetime_stats": {},
+        }
         self._active_user: str | None = None
 
     async def async_load_stored(self) -> None:
@@ -271,7 +275,11 @@ class QuizDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def _record_completion(self, player: dict[str, Any]) -> None:
         stats = player.setdefault("stats", {})
         stats["quizzes_completed"] = stats.get("quizzes_completed", 0) + 1
-        stats["percentage"] = round(stats.get("correct", 0) / stats["questions"] * 100, 1) if stats.get("questions") else 0
+        stats["percentage"] = (
+            round(stats.get("correct", 0) / stats["questions"] * 100, 1)
+            if stats.get("questions")
+            else 0
+        )
         self._stored.setdefault("lifetime_stats", {})[self._active_user or ""] = stats.copy()
 
     async def _save(self) -> None:
@@ -282,19 +290,35 @@ class QuizDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         questions = self._stored.get("questions", [])
         index = player.get("index", 0)
         complete = bool(player.get("complete"))
-        question = questions[index] if questions and index < len(questions) and not complete else None
+        question = (
+            questions[index] if questions and index < len(questions) and not complete else None
+        )
         public_question = None
         if question:
-            public_question = {key: value for key, value in question.items() if key != "correct_answer"}
+            public_question = {
+                key: value for key, value in question.items() if key != "correct_answer"
+            }
         answered = player.get("answered", 0)
         correct = player.get("correct", 0)
-        state = "idle" if not questions else "complete" if complete else "feedback" if player.get("feedback") else "question"
+        state = (
+            "idle"
+            if not questions
+            else "complete"
+            if complete
+            else "feedback"
+            if player.get("feedback")
+            else "question"
+        )
         stats = player.get("stats", {})
         aggregate = {"questions": 0, "correct": 0, "quizzes_completed": 0}
         for stored_stats in self._stored.get("lifetime_stats", {}).values():
             for key in aggregate:
                 aggregate[key] += stored_stats.get(key, 0)
-        aggregate["percentage"] = round(aggregate["correct"] / aggregate["questions"] * 100, 1) if aggregate["questions"] else 0
+        aggregate["percentage"] = (
+            round(aggregate["correct"] / aggregate["questions"] * 100, 1)
+            if aggregate["questions"]
+            else 0
+        )
         quiz_name = self.entry.data.get("quiz_name", "Open Trivia Database")
         feedback = deepcopy(player.get("feedback"))
         elapsed = self._elapsed_seconds(player)
@@ -329,6 +353,7 @@ class QuizDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "state": state,
             "quiz_name": quiz_name,
             "set_id": self._stored.get("set_id"),
+            "last_questions_reset": self._stored.get("created_at"),
             "question": public_question,
             "question_index": index,
             "total_questions": len(questions),

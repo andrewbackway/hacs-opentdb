@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from html import unescape
 import logging
+from html import unescape
 from typing import Any
 
 from aiohttp import ClientError, ClientSession
