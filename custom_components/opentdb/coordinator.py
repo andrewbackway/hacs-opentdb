@@ -334,12 +334,9 @@ class QuizDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         leaderboard = self._build_leaderboard()
         game = {
             "quiz_name": quiz_name,
-            "set_id": self._stored.get("set_id"),
             "day": (self._stored.get("created_at") or "")[:10],
-            "question_index": index,
             "total_questions": len(questions),
             "question": public_question,
-            "feedback": feedback,
             "score": score,
             "elapsed_seconds": elapsed,
             "player": {

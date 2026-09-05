@@ -30,10 +30,8 @@ SENSORS: tuple[QuizSensorDescription, ...] = (
         value_fn=lambda data: data.get("state"),
         attributes_fn=lambda data: {
             "game": data.get("game"),
-            **{
-                key: data.get(key)
-                for key in ("quiz_name", "set_id", "question_index", "total_questions", "feedback")
-            },
+            "quiz_name": data.get("quiz_name"),
+            "total_questions": data.get("total_questions"),
         },
     ),
     QuizSensorDescription(

@@ -21,10 +21,10 @@ def test_same_quiz_names_keep_unique_sensor_ids():
     }
 
     assert first_ids.isdisjoint(second_ids)
-    assert {unique_id.rsplit("_", 1)[-1] for unique_id in first_ids} == {
+    assert {unique_id.removeprefix("entry_1_") for unique_id in first_ids} == {
         description.key for description in SENSORS
     }
-    assert {unique_id.rsplit("_", 1)[-1] for unique_id in second_ids} == {
+    assert {unique_id.removeprefix("entry_2_") for unique_id in second_ids} == {
         description.key for description in SENSORS
     }
 

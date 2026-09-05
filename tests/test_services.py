@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from homeassistant.core import Context
 
-from custom_components.opentdb import __init__ as opentdb_init
+import custom_components.opentdb as opentdb_init
 from custom_components.opentdb.const import (
     DOMAIN,
     SERVICE_ANSWER,
