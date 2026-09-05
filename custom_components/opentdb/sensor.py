@@ -35,27 +35,6 @@ SENSORS: tuple[QuizSensorDescription, ...] = (
         },
     ),
     QuizSensorDescription(
-        key="question",
-        translation_key="question",
-        icon="mdi:help-circle-outline",
-        value_fn=lambda data: (data.get("question") or {}).get("question"),
-        attributes_fn=lambda data: data.get("question") or {},
-    ),
-    QuizSensorDescription(
-        key="score",
-        translation_key="score",
-        icon="mdi:trophy-outline",
-        value_fn=lambda data: (data.get("score") or {}).get("correct", 0),
-        attributes_fn=lambda data: data.get("score") or {},
-    ),
-    QuizSensorDescription(
-        key="elapsed_time",
-        translation_key="elapsed_time",
-        icon="mdi:timer-outline",
-        native_unit_of_measurement="s",
-        value_fn=lambda data: data.get("elapsed_seconds", 0),
-    ),
-    QuizSensorDescription(
         key="last_questions_reset",
         translation_key="last_questions_reset",
         icon="mdi:refresh",
@@ -63,13 +42,6 @@ SENSORS: tuple[QuizSensorDescription, ...] = (
         value_fn=lambda data: dt_util.parse_datetime(data["last_questions_reset"])
         if data.get("last_questions_reset")
         else None,
-    ),
-    QuizSensorDescription(
-        key="player_statistics",
-        translation_key="player_statistics",
-        icon="mdi:account-chart-outline",
-        value_fn=lambda data: (data.get("player_stats") or {}).get("questions", 0),
-        attributes_fn=lambda data: data.get("player_stats") or {},
     ),
     QuizSensorDescription(
         key="quiz_statistics",

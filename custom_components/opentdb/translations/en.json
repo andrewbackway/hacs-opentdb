@@ -20,11 +20,7 @@
   "entity": {
     "sensor": {
       "quiz": { "name": "Quiz" },
-      "question": { "name": "Question" },
-      "score": { "name": "Score" },
-      "elapsed_time": { "name": "Elapsed time" },
       "last_questions_reset": { "name": "Last questions reset" },
-      "player_statistics": { "name": "Player statistics" },
       "quiz_statistics": { "name": "Quiz statistics" },
       "leaderboard": { "name": "Leaderboard" }
     }

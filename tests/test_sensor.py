@@ -27,6 +27,12 @@ def test_same_quiz_names_keep_unique_sensor_ids():
     assert {unique_id.removeprefix("entry_2_") for unique_id in second_ids} == {
         description.key for description in SENSORS
     }
+    assert {description.key for description in SENSORS} == {
+        "quiz",
+        "last_questions_reset",
+        "quiz_statistics",
+        "leaderboard",
+    }
 
 
 def test_last_questions_reset_sensor_is_timestamp():

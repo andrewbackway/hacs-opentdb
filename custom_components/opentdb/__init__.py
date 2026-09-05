@@ -45,6 +45,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await coordinator.async_daily_refresh()
     coordinator.async_set_updated_data(coordinator._build_view(None))
     hass.data[DOMAIN][entry.entry_id] = coordinator
+    registry = er.async_get(hass)
+    retired_sensor_suffixes = {"question", "score", "elapsed_time", "player_statistics"}
+    for entity in er.async_entries_for_config_entry(registry, entry.entry_id):
+        if entity.domain == "sensor" and any(
+            entity.unique_id.endswith(f"_{suffix}") for suffix in retired_sensor_suffixes
+        ):
+            registry.async_remove(entity.entity_id)
 
     async def _options_updated(hass: HomeAssistant, updated_entry: ConfigEntry) -> None:
         await coordinator.async_reset_quiz_for_all()

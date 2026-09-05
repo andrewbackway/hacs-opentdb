@@ -1,6 +1,6 @@
 # Open Trivia Database for Home Assistant
 
-Configurable Open Trivia Database quiz for Home Assistant. The integration provides one quiz device with sensors for the current question, score, elapsed time, player statistics, and aggregate quiz statistics.
+Configurable Open Trivia Database quiz for Home Assistant. The integration provides one quiz device with a primary Quiz sensor, a question-set reset timestamp, aggregate quiz statistics, and a leaderboard.
 
 Questions are fetched from the [Open Trivia Database API](https://opentdb.com/). The integration uses OpenTDB's default response encoding and shuffles answer choices before exposing them to Home Assistant.
 
@@ -48,7 +48,7 @@ To change these values later, open the integration under **Settings > Devices & 
 
 ## Sensors
 
-The configured quiz creates one Home Assistant device and eight sensors. Entity names are based on the quiz name, so a quiz named `Trivia Quiz` normally creates entities such as `sensor.trivia_quiz_quiz` and `sensor.trivia_quiz_question`. The exact entity ID can vary if it conflicts with an existing entity.
+The configured quiz creates one Home Assistant device and four sensors. Entity names are based on the quiz name, so a quiz named `Trivia Quiz` normally creates entities such as `sensor.trivia_quiz_quiz` and `sensor.trivia_quiz_last_questions_reset`. The exact entity ID can vary if it conflicts with an existing entity.
 
 All sensors are updated from the same coordinator snapshot. The values below describe the public state and attributes; missing top-level entity attributes are omitted rather than exposed as `null`. The nested `game` payload can contain `null` values so cards can distinguish an empty field from a missing payload.
 
@@ -62,38 +62,7 @@ All sensors are updated from the same coordinator snapshot. The values below des
   - `total_questions`: number of questions in the current set.
   - `game`: complete nested payload intended for dashboards and custom cards. It contains `quiz_name`, `day`, `total_questions`, `question`, `score`, `player`, and `leaderboard`.
 
-The `game` object is convenient when a card needs the whole quiz state from one entity. The standalone sensors below are better suited to automations and compact dashboard cards.
-
-#### Question
-
-- **State:** current question text, or unavailable/empty when there is no active question.
-- **Attributes:** `category`, `type`, `difficulty`, `question`, and `answers`.
-
-`answers` is the shuffled list of answer choices to submit to `opentdb.submit_answer`. The correct answer is intentionally removed from the public payload, so neither the state nor the attributes expose `correct_answer` while a question is active.
-
-#### Score
-
-- **State:** number of correct answers in the current player's active quiz.
-- **Attributes:**
-
-```yaml
-answered: 3
-correct: 2
-incorrect: 1
-percentage: 66.7
-points: 275
-streak: 2
-best_streak: 2
-```
-
-`points` includes the base score and any speed or streak bonuses. These values describe the logged-in user's current quiz session, not the aggregate quiz.
-
-#### Elapsed time
-
-- **State:** seconds since the current player's quiz session started.
-- **Unit:** seconds (`s`).
-
-The timer continues while the quiz is in progress. Once the player completes the quiz, it stops at the completion time. Resetting the player's quiz starts a new timer on the next quiz start.
+The `game` object is convenient when a card needs the whole quiz state from one entity. The remaining aggregate sensors are better suited to automations and compact dashboard cards.
 
 #### Last questions reset
 
@@ -102,13 +71,6 @@ The timer continues while the quiz is in progress. Once the player completes the
 - **Value:** a timezone-aware ISO 8601 timestamp rendered by Home Assistant according to the user's locale.
 
 This timestamp changes when `new_quiz`, `refresh_questions`, a scheduled daily refresh, or another forced question refresh replaces the shared set. It is shared by all players of the configured quiz. It remains empty until the first question set has been downloaded.
-
-#### Player statistics
-
-- **State:** lifetime questions answered by the logged-in player.
-- **Attributes:** lifetime counters including `questions`, `correct`, `percentage`, `quizzes_completed`, `total_points`, `best_streak`, `last_played_date`, `daily_play_streak`, and the `daily` and `weekly` history maps when available.
-
-These statistics survive a player reset, a question-set reset, and Home Assistant restarts. They are stored separately for each Home Assistant user.
 
 #### Quiz statistics
 
@@ -167,7 +129,7 @@ attributes:
     leaderboard: []
 ```
 
-Progress and statistics are stored in Home Assistant's storage and survive restarts. A player reset clears only that player's active session. Replacing the shared question set clears unfinished active sessions for all players but retains lifetime statistics.
+The Quiz sensor is the card's data source. Its nested `game` attribute contains the current question and answer choices, per-user score, elapsed time, feedback, player summary, and leaderboard. The standalone question, score, elapsed-time, and player-statistics entities are intentionally not created. Progress and statistics are stored in Home Assistant's storage and survive restarts. A player reset clears only that player's active session. Replacing the shared question set clears unfinished active sessions for all players but retains lifetime statistics.
 
 ## Lovelace card
 
@@ -179,7 +141,7 @@ entity: sensor.trivia_quiz_quiz
 title: Evening trivia
 ```
 
-The dashboard must run in a logged-in Home Assistant user context because quiz actions are user-specific.
+The dashboard must run in a logged-in Home Assistant user context because quiz actions are user-specific. The card targets the remaining Quiz sensor and uses the integration's authenticated WebSocket commands; it does not query the removed standalone sensors.
 
 ## Services
 
