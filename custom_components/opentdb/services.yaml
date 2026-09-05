@@ -2,25 +2,22 @@ start_quiz:
   name: Start quiz
   description: Start or resume today's shared question set for the logged-in user (fetches a set if none exists yet).
   target:
-    selector:
-      device:
-        integration: opentdb
+    entity:
+      integration: opentdb
 
 new_quiz:
   name: New quiz
   description: Force-fetch a brand-new shared question set and start it.
   target:
-    selector:
-      device:
-        integration: opentdb
+    entity:
+      integration: opentdb
 
 submit_answer:
   name: Submit answer
   description: Submit the logged-in user's one allowed answer for a question.
   target:
-    selector:
-      device:
-        integration: opentdb
+    entity:
+      integration: opentdb
   fields:
     question_index:
       name: Question index
@@ -39,30 +36,26 @@ next_question:
   name: Next question
   description: Advance after answer feedback.
   target:
-    selector:
-      device:
-        integration: opentdb
+    entity:
+      integration: opentdb
 
 reset_quiz:
   name: Reset quiz
   description: Reset the logged-in user's progress without awarding completion.
   target:
-    selector:
-      device:
-        integration: opentdb
+    entity:
+      integration: opentdb
 
 refresh:
   name: Refresh quiz
   description: Re-publish the current quiz state without replacing its question set.
   target:
-    selector:
-      device:
-        integration: opentdb
+    entity:
+      integration: opentdb
 
 refresh_questions:
   name: Refresh quiz questions
   description: Deprecated alias of new_quiz. Force-fetch a brand-new shared question set and start it.
   target:
-    selector:
-      device:
-        integration: opentdb
+    entity:
+      integration: opentdb
