@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from unittest.mock import MagicMock
 
 from custom_components.opentdb.coordinator import QuizDataUpdateCoordinator
 
@@ -61,3 +62,25 @@ def test_update_play_streak_resets_after_a_gap():
     QuizDataUpdateCoordinator._update_play_streak(lifetime, "2026-01-03")
 
     assert lifetime["daily_play_streak"] == 1
+
+
+async def test_duplicate_answer_returns_existing_result():
+    coordinator = QuizDataUpdateCoordinator.__new__(QuizDataUpdateCoordinator)
+    coordinator._active_user = None
+    coordinator._stored = {
+        "questions": [{"correct_answer": "correct"}],
+        "players": {
+            "user_1": {
+                "index": 0,
+                "feedback": {"correct": True},
+                "points": 125,
+                "answered": 1,
+                "correct": 1,
+            }
+        },
+    }
+    coordinator.async_set_updated_data = MagicMock()
+
+    assert await coordinator.async_answer_question("user_1", 0, "correct") is True
+    assert coordinator._stored["players"]["user_1"]["points"] == 125
+    coordinator.async_set_updated_data.assert_not_called()

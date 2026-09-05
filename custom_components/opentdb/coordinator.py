@@ -69,12 +69,14 @@ class QuizDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.set_active_user(user_id)
         if force_new or not self._stored.get("questions"):
             await self._load_new_set()
-        player = self._new_player(user_id)
-        player["session_id"] = secrets.token_urlsafe(16)
-        self._stored.setdefault("players", {})[user_id] = player
-        stats = self._stored["players"][user_id]["stats"]
-        stats["quizzes_started"] = stats.get("quizzes_started", 0) + 1
-        self._stored.setdefault("lifetime_stats", {})[user_id] = stats.copy()
+        players = self._stored.setdefault("players", {})
+        if force_new or user_id not in players:
+            player = self._new_player(user_id)
+            player["session_id"] = secrets.token_urlsafe(16)
+            players[user_id] = player
+            stats = player["stats"]
+            stats["quizzes_started"] = stats.get("quizzes_started", 0) + 1
+            self._stored.setdefault("lifetime_stats", {})[user_id] = stats.copy()
         await self._save()
         self.async_set_updated_data(self._build_view(user_id))
 
@@ -109,7 +111,7 @@ class QuizDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if player.get("index", 0) != question_index:
             raise ValueError("The question is no longer current")
         if player.get("feedback") is not None:
-            raise ValueError("This question has already been answered")
+            return bool(player["feedback"].get("correct"))
         if not questions or question_index >= len(questions):
             raise ValueError("There is no active question")
 
