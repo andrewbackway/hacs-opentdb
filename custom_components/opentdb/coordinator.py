@@ -69,7 +69,9 @@ class QuizDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.set_active_user(user_id)
         if force_new or not self._stored.get("questions"):
             await self._load_new_set()
-        self._stored.setdefault("players", {})[user_id] = self._new_player(user_id)
+        player = self._new_player(user_id)
+        player["session_id"] = secrets.token_urlsafe(16)
+        self._stored.setdefault("players", {})[user_id] = player
         stats = self._stored["players"][user_id]["stats"]
         stats["quizzes_started"] = stats.get("quizzes_started", 0) + 1
         self._stored.setdefault("lifetime_stats", {})[user_id] = stats.copy()
