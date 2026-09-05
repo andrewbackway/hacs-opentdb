@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 from custom_components.opentdb.coordinator import QuizDataUpdateCoordinator
@@ -67,6 +68,7 @@ def test_update_play_streak_resets_after_a_gap():
 async def test_duplicate_answer_returns_existing_result():
     coordinator = QuizDataUpdateCoordinator.__new__(QuizDataUpdateCoordinator)
     coordinator._active_user = None
+    coordinator.entry = SimpleNamespace(data={})
     coordinator._stored = {
         "questions": [{"correct_answer": "correct"}],
         "players": {
@@ -83,4 +85,4 @@ async def test_duplicate_answer_returns_existing_result():
 
     assert await coordinator.async_answer_question("user_1", 0, "correct") is True
     assert coordinator._stored["players"]["user_1"]["points"] == 125
-    coordinator.async_set_updated_data.assert_not_called()
+    coordinator.async_set_updated_data.assert_called_once()
