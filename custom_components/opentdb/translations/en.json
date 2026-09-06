@@ -33,6 +33,10 @@
       }
     },
     "abort": {
+<<<<<<< HEAD
+=======
+      "single_instance_allowed": "Only one quiz can be configured.",
+>>>>>>> 5baa7c07cdad200ecab53a4313c3359528963357
       "no_question_files": "No question files found. Add a .json file to /config/opentdb and try again."
     },
     "error": {
@@ -44,6 +48,7 @@
     "step": {
       "init": {
         "title": "Quiz options",
+<<<<<<< HEAD
         "description": "Choose where this quiz's questions come from.",
         "menu_options": {
           "opentdb": "Online (OpenTDB)",
@@ -52,12 +57,15 @@
       },
       "opentdb": {
         "title": "Online quiz (OpenTDB)",
+=======
+>>>>>>> 5baa7c07cdad200ecab53a4313c3359528963357
         "data": {
           "quiz_name": "Quiz name",
           "amount": "Questions per quiz",
           "category": "Category",
           "difficulty": "Difficulty",
           "type": "Question type",
+<<<<<<< HEAD
           "refresh_time": "Daily refresh time"
         }
       },
@@ -78,6 +86,12 @@
     "error": {
       "cannot_connect": "Could not retrieve questions from OpenTDB.",
       "invalid_file": "The selected question file could not be loaded."
+=======
+          "file": "Question file",
+          "refresh_time": "Daily refresh time"
+        }
+      }
+>>>>>>> 5baa7c07cdad200ecab53a4313c3359528963357
     }
   },
   "entity": {

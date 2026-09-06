@@ -29,12 +29,20 @@ Choose **Integration** as the category, install it, restart Home Assistant, and 
 
 ## Configuration
 
+<<<<<<< HEAD
 You can configure one or more independent quiz devices. To add another quiz, select **Add integration** again and give it a different name. During setup, first choose a **question source**:
+=======
+The integration supports one configured quiz device. During setup, first choose a **question source**:
+>>>>>>> 5baa7c07cdad200ecab53a4313c3359528963357
 
 - **Online (OpenTDB)** — questions are downloaded from the OpenTDB API (name, count, filters, refresh time).
 - **Local file** — questions are loaded from a JSON file you place in `<config>/opentdb/`.
 
+<<<<<<< HEAD
 Configure the quiz name, question count, filters, and daily refresh time during setup. Each quiz keeps its own question set, schedule, players, and leaderboard.
+=======
+Configure its name, question count, filters, and daily refresh time during setup.
+>>>>>>> 5baa7c07cdad200ecab53a4313c3359528963357
 
 | Option | Required | Default | Description |
 | --- | --- | --- | --- |
@@ -51,7 +59,11 @@ The selected question combination is checked against OpenTDB when the integratio
 
 Select the **Local file** source to run a quiz from your own questions instead of OpenTDB.
 
+<<<<<<< HEAD
 - Place `*.json` files in `<config>/opentdb/`. The integration creates this folder on startup, and the setup dialog lists the files found there.
+=======
+- Place `*.json` files in `<config>/opentdb/` (create the folder if it does not exist). The setup dialog lists the files found there.
+>>>>>>> 5baa7c07cdad200ecab53a4313c3359528963357
 - Each day, a random subset of **Number of questions** is drawn from the file's pool, so a large file gives fresh quizzes daily. Answer order is reshuffled.
 - File format:
 

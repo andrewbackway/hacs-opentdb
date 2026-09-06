@@ -34,6 +34,7 @@ def questions_dir(hass: HomeAssistant) -> str:
     return hass.config.path(QUESTION_SETS_SUBDIR)
 
 
+<<<<<<< HEAD
 def _ensure_dir(base_dir: str) -> None:
     os.makedirs(base_dir, exist_ok=True)
 
@@ -43,6 +44,8 @@ async def async_ensure_questions_dir(hass: HomeAssistant) -> None:
     await hass.async_add_executor_job(_ensure_dir, questions_dir(hass))
 
 
+=======
+>>>>>>> 5baa7c07cdad200ecab53a4313c3359528963357
 def _safe_path(base_dir: str, filename: str) -> str:
     """Resolve filename inside base_dir, rejecting traversal outside it."""
     if not filename or filename != os.path.basename(filename) or not filename.endswith(".json"):

@@ -118,6 +118,11 @@ class OpenTDBConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> Any:
+<<<<<<< HEAD
+=======
+        if self._async_current_entries():
+            return self.async_abort(reason="single_instance_allowed")
+>>>>>>> 5baa7c07cdad200ecab53a4313c3359528963357
         return self.async_show_menu(step_id="user", menu_options=[SOURCE_OPENTDB, SOURCE_FILE])
 
     async def async_step_opentdb(self, user_input: dict[str, Any] | None = None) -> Any:
@@ -169,16 +174,27 @@ class OpenTDBConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     class OptionsFlowHandler(config_entries.OptionsFlow):
         async def async_step_init(self, user_input: dict[str, Any] | None = None) -> Any:
+<<<<<<< HEAD
             return self.async_show_menu(step_id="init", menu_options=[SOURCE_OPENTDB, SOURCE_FILE])
 
         async def async_step_opentdb(self, user_input: dict[str, Any] | None = None) -> Any:
             errors: dict[str, str] = {}
+=======
+            if user_input is not None:
+                return self.async_create_entry(title="", data=user_input)
+>>>>>>> 5baa7c07cdad200ecab53a4313c3359528963357
             defaults = {**self.config_entry.data, **self.config_entry.options}
+            if defaults.get(CONF_SOURCE) == SOURCE_FILE:
+                files = await async_list_question_files(self.hass)
+                return self.async_show_form(
+                    step_id="init", data_schema=_file_schema(files, defaults)
+                )
             client = OpenTDBClient(async_get_clientsession(self.hass))
             try:
                 categories = await client.async_get_categories()
             except OpenTDBError:
                 categories = []
+<<<<<<< HEAD
                 errors["base"] = "cannot_connect"
             if user_input:
                 try:
@@ -219,6 +235,10 @@ class OpenTDBConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 step_id="file",
                 data_schema=_file_schema(files, {**defaults, **(user_input or {})}),
                 errors=errors,
+=======
+            return self.async_show_form(
+                step_id="init", data_schema=_opentdb_schema(categories, defaults)
+>>>>>>> 5baa7c07cdad200ecab53a4313c3359528963357
             )
 
     @staticmethod
