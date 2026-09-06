@@ -29,7 +29,12 @@ Choose **Integration** as the category, install it, restart Home Assistant, and 
 
 ## Configuration
 
-The integration supports one configured quiz device. Configure its name, question count, filters, and daily refresh time during setup.
+The integration supports one configured quiz device. During setup, first choose a **question source**:
+
+- **Online (OpenTDB)** — questions are downloaded from the OpenTDB API (name, count, filters, refresh time).
+- **Local file** — questions are loaded from a JSON file you place in `<config>/opentdb/`.
+
+Configure its name, question count, filters, and daily refresh time during setup.
 
 | Option | Required | Default | Description |
 | --- | --- | --- | --- |
@@ -41,6 +46,26 @@ The integration supports one configured quiz device. Configure its name, questio
 | **Daily refresh time** | Yes | `00:00:00` | Time in 24-hour `HH:MM:SS` format at which a new shared question set is downloaded for the day. |
 
 The selected question combination is checked against OpenTDB when the integration is configured. A category is an OpenTDB numeric ID, not a category name. OpenTDB can return fewer questions than requested when its database does not have enough matching questions.
+
+### Local question files
+
+Select the **Local file** source to run a quiz from your own questions instead of OpenTDB.
+
+- Place `*.json` files in `<config>/opentdb/` (create the folder if it does not exist). The setup dialog lists the files found there.
+- Each day, a random subset of **Number of questions** is drawn from the file's pool, so a large file gives fresh quizzes daily. Answer order is reshuffled.
+- File format:
+
+  ```json
+  {
+    "topic": "Science and Nature",
+    "difficulty": "easy",
+    "questions": [
+      { "question": "How many legs does a horse have?", "options": ["2", "4", "6", "8"], "answer": "4" }
+    ]
+  }
+  ```
+
+  Each question needs a non-empty `question`, at least two unique `options`, and an `answer` that is one of the `options`. Two options are treated as True/False; invalid questions are skipped. `topic` and `difficulty` are optional metadata.
 
 ### Options
 

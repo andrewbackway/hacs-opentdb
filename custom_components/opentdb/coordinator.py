@@ -17,14 +17,23 @@ from .const import (
     CONF_AMOUNT,
     CONF_CATEGORY,
     CONF_DIFFICULTY,
+    CONF_FILE,
+    CONF_SOURCE,
     CONF_TYPE,
+    DEFAULT_AMOUNT,
     DOMAIN,
     POINTS_BASE,
+    SOURCE_FILE,
     SPEED_BONUS_MAX,
     SPEED_WINDOW_SECONDS,
     STORAGE_VERSION,
     STREAK_BONUS_CAP,
     STREAK_BONUS_STEP,
+)
+from .loader import (
+    QuestionFileError,
+    async_load_question_file,
+    sample_questions,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -92,9 +101,12 @@ class QuizDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     async def _load_new_set(self) -> None:
         settings = self.entry.data | self.entry.options
-        questions = await self._fetch_questions(settings)
+        if settings.get(CONF_SOURCE) == SOURCE_FILE:
+            questions = await self._load_file_questions(settings)
+        else:
+            questions = await self._fetch_questions(settings)
         if not questions:
-            raise UpdateFailed("OpenTDB returned no questions")
+            raise UpdateFailed("No questions available for this quiz")
         self._stored.update(
             {
                 "set_id": secrets.token_hex(8),
@@ -103,6 +115,16 @@ class QuizDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "players": {},
             }
         )
+
+    async def _load_file_questions(self, settings: dict[str, Any]) -> list[dict[str, Any]]:
+        filename = settings.get(CONF_FILE)
+        if not filename:
+            raise UpdateFailed("No question file is configured")
+        try:
+            pool = await async_load_question_file(self.hass, filename)
+        except QuestionFileError as err:
+            raise UpdateFailed(str(err)) from err
+        return sample_questions(pool, int(settings.get(CONF_AMOUNT, DEFAULT_AMOUNT)))
 
     async def async_answer_question(self, user_id: str, question_index: int, answer: str) -> bool:
         self.set_active_user(user_id)
@@ -359,6 +381,7 @@ class QuizDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return {
             "session_id": player.get("session_id"),
             "state": state,
+            "complete": complete,
             "quiz_name": quiz_name,
             "set_id": self._stored.get("set_id"),
             "last_questions_reset": self._stored.get("created_at"),
