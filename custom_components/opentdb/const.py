@@ -1,7 +1,7 @@
 from typing import Final
 
 DOMAIN: Final = "opentdb"
-VERSION: Final = "0.3.0"
+VERSION: Final = "0.3.1"
 PLATFORMS: Final = ["sensor"]
 
 CONF_QUIZ_NAME: Final = "quiz_name"
