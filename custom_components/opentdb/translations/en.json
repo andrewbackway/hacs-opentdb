@@ -33,8 +33,6 @@
       }
     },
     "abort": {
-      "single_instance_allowed": "Only one quiz can be configured.",
- 
       "no_question_files": "No question files found. Add a .json file to /config/opentdb and try again."
     },
     "error": {
