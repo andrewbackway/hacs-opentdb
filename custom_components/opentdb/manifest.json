@@ -9,8 +9,8 @@
   "issue_tracker": "https://github.com/andrewbackway/hacs-opentdb/issues",
   "requirements": [],
 <<<<<<< HEAD
-  "version": "0.3.1"
+  "version": "0.3.2"
 =======
-  "version": "0.3.1"
+  "version": "0.3.2"
 >>>>>>> 5baa7c07cdad200ecab53a4313c3359528963357
 }
