@@ -3,7 +3,15 @@
     "step": {
       "user": {
         "title": "Open Trivia Database Quiz",
-        "description": "Configure a logged-in Home Assistant trivia quiz.",
+        "description": "Choose where this quiz's questions come from.",
+        "menu_options": {
+          "opentdb": "Online (OpenTDB)",
+          "file": "Local file (/config/opentdb)"
+        }
+      },
+      "opentdb": {
+        "title": "Online quiz (OpenTDB)",
+        "description": "Configure a trivia quiz sourced from the OpenTDB API.",
         "data": {
           "quiz_name": "Quiz name",
           "amount": "Questions per quiz",
@@ -12,13 +20,64 @@
           "type": "Question type",
           "refresh_time": "Daily refresh time"
         }
+      },
+      "file": {
+        "title": "Local quiz file",
+        "description": "Load questions from a JSON file placed in /config/opentdb.",
+        "data": {
+          "quiz_name": "Quiz name",
+          "file": "Question file",
+          "amount": "Questions per quiz",
+          "refresh_time": "Daily refresh time"
+        }
       }
     },
     "abort": {
-      "single_instance_allowed": "Only one quiz can be configured."
+      "no_question_files": "No question files found. Add a .json file to /config/opentdb and try again."
     },
     "error": {
-      "cannot_connect": "Could not retrieve questions from OpenTDB."
+      "cannot_connect": "Could not retrieve questions from OpenTDB.",
+      "invalid_file": "The selected question file could not be loaded."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Quiz options",
+        "description": "Choose where this quiz's questions come from.",
+        "menu_options": {
+          "opentdb": "Online (OpenTDB)",
+          "file": "Local file (/config/opentdb)"
+        }
+      },
+      "opentdb": {
+        "title": "Online quiz (OpenTDB)",
+        "data": {
+          "quiz_name": "Quiz name",
+          "amount": "Questions per quiz",
+          "category": "Category",
+          "difficulty": "Difficulty",
+          "type": "Question type",
+          "refresh_time": "Daily refresh time"
+        }
+      },
+      "file": {
+        "title": "Local quiz file",
+        "description": "Load questions from a JSON file placed in /config/opentdb.",
+        "data": {
+          "quiz_name": "Quiz name",
+          "file": "Question file",
+          "amount": "Questions per quiz",
+          "refresh_time": "Daily refresh time"
+        }
+      }
+    },
+    "abort": {
+      "no_question_files": "No question files found. Add a .json file to /config/opentdb and try again."
+    },
+    "error": {
+      "cannot_connect": "Could not retrieve questions from OpenTDB.",
+      "invalid_file": "The selected question file could not be loaded."
     }
   },
   "entity": {

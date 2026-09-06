@@ -1,7 +1,7 @@
 from typing import Final
 
 DOMAIN: Final = "opentdb"
-VERSION: Final = "0.2.7"
+VERSION: Final = "0.3.0"
 PLATFORMS: Final = ["sensor"]
 
 CONF_QUIZ_NAME: Final = "quiz_name"
@@ -10,6 +10,16 @@ CONF_CATEGORY: Final = "category"
 CONF_DIFFICULTY: Final = "difficulty"
 CONF_TYPE: Final = "type"
 CONF_REFRESH_TIME: Final = "refresh_time"
+CONF_SOURCE: Final = "source"
+CONF_FILE: Final = "file"
+
+SOURCE_OPENTDB: Final = "opentdb"
+SOURCE_FILE: Final = "file"
+
+# Local question-set files live under <config>/opentdb/*.json
+QUESTION_SETS_SUBDIR: Final = "opentdb"
+MAX_FILE_BYTES: Final = 5 * 1024 * 1024
+MAX_FILE_QUESTIONS: Final = 5000
 
 DEFAULT_AMOUNT: Final = 10
 DEFAULT_REFRESH_TIME: Final = "00:00:00"

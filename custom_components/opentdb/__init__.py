@@ -26,12 +26,14 @@ from .const import (
     SERVICE_START,
 )
 from .coordinator import QuizDataUpdateCoordinator
+from .loader import async_ensure_questions_dir
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     hass.data.setdefault(DOMAIN, {})
+    await async_ensure_questions_dir(hass)
     _register_services(hass)
     _register_websocket_commands(hass)
     return True

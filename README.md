@@ -1,8 +1,8 @@
 # Open Trivia Database for Home Assistant
 
-Configurable Open Trivia Database quiz for Home Assistant. The integration provides one quiz device with a primary Quiz sensor, a question-set reset timestamp, aggregate quiz statistics, and a leaderboard.
+Configurable Open Trivia Database quizzes for Home Assistant. Each configured quiz is its own device with a primary Quiz sensor, a question-set reset timestamp, aggregate quiz statistics, and a leaderboard. You can add the integration more than once to run several independent quizzes.
 
-Questions are fetched from the [Open Trivia Database API](https://opentdb.com/). The integration uses OpenTDB's default response encoding and shuffles answer choices before exposing them to Home Assistant.
+Questions come from the [Open Trivia Database API](https://opentdb.com/) or from a local JSON file you provide. Answer choices are shuffled before they are exposed to Home Assistant.
 
 ## Installation
 
@@ -29,7 +29,12 @@ Choose **Integration** as the category, install it, restart Home Assistant, and 
 
 ## Configuration
 
-The integration supports one configured quiz device. Configure its name, question count, filters, and daily refresh time during setup.
+You can configure one or more independent quiz devices. To add another quiz, select **Add integration** again and give it a different name. During setup, first choose a **question source**:
+
+- **Online (OpenTDB)** — questions are downloaded from the OpenTDB API (name, count, filters, refresh time).
+- **Local file** — questions are loaded from a JSON file you place in `<config>/opentdb/`.
+
+Configure the quiz name, question count, filters, and daily refresh time during setup. Each quiz keeps its own question set, schedule, players, and leaderboard.
 
 | Option | Required | Default | Description |
 | --- | --- | --- | --- |
@@ -42,13 +47,33 @@ The integration supports one configured quiz device. Configure its name, questio
 
 The selected question combination is checked against OpenTDB when the integration is configured. A category is an OpenTDB numeric ID, not a category name. OpenTDB can return fewer questions than requested when its database does not have enough matching questions.
 
+### Local question files
+
+Select the **Local file** source to run a quiz from your own questions instead of OpenTDB.
+
+- Place `*.json` files in `<config>/opentdb/`. The integration creates this folder on startup, and the setup dialog lists the files found there.
+- Each day, a random subset of **Number of questions** is drawn from the file's pool, so a large file gives fresh quizzes daily. Answer order is reshuffled.
+- File format:
+
+  ```json
+  {
+    "topic": "Science and Nature",
+    "difficulty": "easy",
+    "questions": [
+      { "question": "How many legs does a horse have?", "options": ["2", "4", "6", "8"], "answer": "4" }
+    ]
+  }
+  ```
+
+  Each question needs a non-empty `question`, at least two unique `options`, and an `answer` that is one of the `options`. Two options are treated as True/False; invalid questions are skipped. `topic` and `difficulty` are optional metadata.
+
 ### Options
 
-To change these values later, open the integration under **Settings > Devices & services**, select the quiz device, and choose **Configure**. Changing options resets unfinished progress for all users of that quiz, but keeps lifetime statistics.
+To change these values later, open the integration under **Settings > Devices & services**, select the quiz device, and choose **Configure**. You can also switch a quiz between the **Online (OpenTDB)** and **Local file** sources here. Changing options resets unfinished progress for all users of that quiz, but keeps lifetime statistics.
 
 ## Sensors
 
-The configured quiz creates one Home Assistant device and four sensors. Entity names are based on the quiz name, so a quiz named `Trivia Quiz` normally creates entities such as `sensor.trivia_quiz_quiz` and `sensor.trivia_quiz_last_questions_reset`. The exact entity ID can vary if it conflicts with an existing entity.
+Each configured quiz creates one Home Assistant device and four sensors. Entity names are based on the quiz name, so a quiz named `Trivia Quiz` normally creates entities such as `sensor.trivia_quiz_quiz` and `sensor.trivia_quiz_last_questions_reset`. The exact entity ID can vary if it conflicts with an existing entity.
 
 All sensors are updated from the same coordinator snapshot. The values below describe the public state and attributes; missing top-level entity attributes are omitted rather than exposed as `null`. The nested `game` payload can contain `null` values so cards can distinguish an empty field from a missing payload.
 
